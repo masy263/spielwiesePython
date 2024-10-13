@@ -1,0 +1,13 @@
+#!/bin/python3
+
+import sys
+
+nArgs = len(sys.argv)
+
+print("number of args: %d" % (nArgs - 1))
+
+it = 1;
+
+while it < nArgs:
+  print("arg %d: %s" % (it, sys.argv[it]))
+  it = it + 1;
