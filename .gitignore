@@ -1,7 +1,9 @@
 # dirs
 
+**/outputData/
 **/__pycache__/
 
 # files
 
+*.csv
 *.txt
