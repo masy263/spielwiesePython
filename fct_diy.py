@@ -92,3 +92,38 @@ def fct_rcGen(nOs, rollOff, nPeriods = 10, TSym = 1):
 
   return rc
 
+def fct_uint2bin(x, bitWidth=0):
+
+  if np.ndim(x) == 0:
+    lenX = 1
+    x = np.array([x])
+  else:
+    lenX = len(x)
+
+  if bitWidth == 0:
+    bitWidth =  fct_determineBitWidth(np.max(x))
+
+  ret = np.zeros(lenX * bitWidth, dtype=int)
+  ret = ret.reshape(lenX, bitWidth)
+  divVec = np.ones(lenX) * 2
+  bitIdx = 0
+  while np.max(x) > 0:
+    bitIdx = bitIdx + 1
+    ret[:,bitWidth - bitIdx] = x % divVec
+    x = x // divVec
+  return ret
+
+def fct_int2complementOnTwo(x, bitWidth=0):
+  minVal = np.min(x)
+  maxVal = np.max(x)
+
+  if (maxVal + 1) > (2**bitWidth - 1):
+    bitWidth = fct_determineBitWidth(maxVal) + 1
+
+  if -minVal> (2**bitWidth - 1):
+    bitWidth = fct_determineBitWidth(-minVal) + 1
+
+  ret = x * (x >= 0) + (x < 0) * (2**bitWidth + x);
+
+  return ret
+

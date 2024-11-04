@@ -4,12 +4,12 @@ from fct_diy import *
 import numpy as np
 import matplotlib.pyplot as plt
 
-calcCfo     = 1
+calcCfo     = 0
 calcSymbols = 1
 
 plt.style.use('dark_background')
 
-inpPath         = '/home/markus/Git-Repos/adrv9361z7035ccbobCmos/verilog/.simPrmk_241023b/'
+inpPath         = '/home/markus/Arbeit/2024-11-04_debuggingSimulation/.simPrmk_241104c/'
 inpFileCfos     = 'freq_out.dat'
 inpFileHest     = 'hest_out.dat'
 inpFileInfoBits = 'info_bit_out.dat'
