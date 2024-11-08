@@ -6,14 +6,13 @@ import matplotlib.pyplot as plt
 
 plt.style.use('dark_background')
 
-# inpPath    = '/home/markus/Git-Repos/adrv9361z7035ccbobCmos/verilog/.sim/'
-inpFileMif = '/home/markus/Git-Repos/adrv9361z7035ccbobCmos/verilog/mif/mogup_lval.mif'
-inpFileSim = '/home/markus/Git-Repos/adrv9361z7035ccbobCmos/verilog/.sim/demodLValOut.hex'
-# inpFileMif = 'test.csv'
+inpPath    = '/home/markus/Arbeit/2024-11-04_debuggingSimulation/.sim_241108b/'
+inpFileMif = 'mogup_lval.mif'
+inpFileSim = 'demodLValOut.hex'
 
 # +++ begin: handle mif data +++
 
-with open(inpFileMif, "r") as fidMif:
+with open(inpPath+inpFileMif, "r") as fidMif:
   inpDataMifHex = fidMif.read()
 fidMif.closed
 
@@ -37,7 +36,7 @@ np.savetxt("outputData/mif.csv", inpDataMifDec, fmt='%4d', delimiter=',')
 
 # +++ begin: handle sim data +++
 
-with open(inpFileSim, "r") as fidSim:
+with open(inpPath+inpFileSim, "r") as fidSim:
   inpDataSimHex = fidSim.read()
 fidSim.closed
 
@@ -61,15 +60,22 @@ np.savetxt("outputData/sim.csv", inpDataSimDec, fmt='%4d', delimiter=',')
 
 # +++ begin: plot +++
 
-plotRangeStart = 0
-plotRangeEnd   = 72
+plotRangeStart =    0
+plotRangeEnd   =  100
 x              = np.arange(0,plotRangeEnd - plotRangeStart)
 lValMif0plot   = inpDataMifDec[:,0][plotRangeStart:plotRangeEnd]
 lValMif1plot   = inpDataMifDec[:,1][plotRangeStart:plotRangeEnd]
 lValSim0plot   = inpDataSimDec[:,0][plotRangeStart:plotRangeEnd]
 lValSim1plot   = inpDataSimDec[:,1][plotRangeStart:plotRangeEnd]
+lValRef0Val    = np.sqrt(np.sum(np.abs(np.array(lValMif0plot ** 2))) / (plotRangeEnd - plotRangeStart))
+lValErr0plot   = np.round((lValSim0plot - lValMif0plot) / lValRef0Val * 100)
+lValRef1Val    = np.sqrt(np.sum(np.abs(np.array(lValMif1plot ** 2))) / (plotRangeEnd - plotRangeStart))
+lValErr1plot   = np.round((lValSim1plot - lValMif1plot) / lValRef1Val * 100)
 
-fig, ax = plt.subplots(2, 1)
+print("[script_241015_lValValidation] quadrature mean of lVal0 in plot range: %2.2f" % lValRef0Val)
+print("[script_241015_lValValidation] quadrature mean of lVal1 in plot range: %2.2f" % lValRef1Val)
+
+fig, ax = plt.subplots(3, 1)
 
 ax[0].set_title("lVals from MIF %d...%d" % (plotRangeStart, plotRangeEnd - 1))
 ax[0].set_xlabel('n')
@@ -85,5 +91,11 @@ ax[1].plot(x, lValSim0plot, '*-', color="yellow", label="My Line 1")
 ax[1].plot(x, lValSim1plot, '.-', color="green", label="My Line 2")
 ax[1].grid()
 
-plt.show()
+ax[2].set_title("lVal ERROR %d...%d" % (plotRangeStart, plotRangeEnd - 1))
+ax[2].set_xlabel('n')
+ax[2].set_ylabel('value difference\nto mean [%]')
+ax[2].plot(x, lValErr0plot, '*-', color="yellow", label="My Line 1")
+ax[2].plot(x, lValErr1plot, '.-', color="green", label="My Line 2")
+ax[2].grid()
 
+plt.show()

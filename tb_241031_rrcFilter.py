@@ -10,8 +10,8 @@ nOs      = 3
 rollOff  = 0.3
 nPeriods = 2
 
-rrcFilter  = fct_rrcGen(nOs, rollOff, nPeriods=3)
-rcFilter   = fct_rcGen(nOs, rollOff, nPeriods=3)
+rrcFilter  = fct_rrcGen(nOs, rollOff, nPeriods=nPeriods)
+rcFilter   = fct_rcGen(nOs, rollOff, nPeriods=nPeriods)
 diffRc     = rrcFilter - rcFilter
 sqrtRc     = np.sqrt(np.abs(rcFilter))
 diffSqrtRc = sqrtRc - np.sqrt(np.abs(rrcFilter))
