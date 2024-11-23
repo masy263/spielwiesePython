@@ -9,19 +9,21 @@ plt.style.use('dark_background')
 tStart = time.time()
 tStep = time.time()
 
-inpNos = 5
-outNos = 15
+inpNos       = 5
+outNos       = 15
+interpFactor = outNos / inpNos
+scaleFactor  = 1500
 
 inpPath = '/home/markus/Arbeit/2024-06-21_TestsignalPrmkUL/Nos5/'
 # inpPath = './'
-outPath = './'
+outPath = '/home/markus/Arbeit/2024-11-15_adcInputData/.sim/'
 
 # inpFileNameImag = inpPath + 'imagInp.dat'
 # inpFileNameReal = inpPath + 'imagInp.dat'
 inpFileNameImag = inpPath + 'samples_input_imag.dat'
 inpFileNameReal = inpPath + 'samples_input_real.dat'
-outFileNameImag = outPath + 'imagOut.dat'
-outFileNameReal = outPath + 'realOut.dat'
+outFileNameImag = outPath + 'adcImag.dat'
+outFileNameReal = outPath + 'adcReal.dat'
 
 
 tStep = time.time()
@@ -38,7 +40,33 @@ inpSigReal = np.genfromtxt(inpFileNameReal, delimiter='\n')
 tStep = time.time() - tStep
 print("     :: exec time: %d" % tStep)
 
-interpFactor = outNos / inpNos
+tStep = time.time()
+tTotal = time.time() - tStart
+print("%4d :: determine inp max magnitude" % tTotal)
+maxImag = np.max(np.abs(inpSigImag))
+maxReal = np.max(np.abs(inpSigReal))
+maxMagn = np.max(np.array([maxImag, maxReal]))
+print("     :: max magnitude imag: %d" % maxImag)
+print("     :: max magnitude real: %d" % maxReal)
+print("     :: max magnitude:      %d" % maxMagn)
+tStep = time.time() - tStep
+print("     :: exec time: %d" % tStep)
+
+tStep = time.time()
+tTotal = time.time() - tStart
+print("%4d :: scale imag data" % tTotal)
+inpSigImag = inpSigImag * scaleFactor
+inpSigImag = inpSigImag // maxMagn
+tStep = time.time() - tStep
+print("     :: exec time: %d" % tStep)
+
+tStep = time.time()
+tTotal = time.time() - tStart
+print("%4d :: scale real data" % tTotal)
+inpSigReal = inpSigReal * scaleFactor
+inpSigReal = inpSigReal // maxMagn
+tStep = time.time() - tStep
+print("     :: exec time: %d" % tStep)
 
 tStep = time.time()
 tTotal = time.time() - tStart
