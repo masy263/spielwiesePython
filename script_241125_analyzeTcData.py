@@ -23,12 +23,12 @@ import matplotlib.pyplot as plt
 plt.style.use('dark_background')
 
 
-inpPath = '/home/markus/Arbeit/2024-11-21_testAufEvalBoard/tcOut241121agcAt50dB/'
+inpPath = '/home/markus/Arbeit/2024-11-21_testAufEvalBoard/tcRawData/'
 outPath = '/home/markus/Arbeit/2024-11-21_testAufEvalBoard/out/'
 
 minAgc        = 0
 maxAgc        = 100
-stpAgc        = 5
+stpAgc        = 1
 idxAgc        = minAgc
 minGen        = -100
 maxGen        = 0
@@ -36,8 +36,8 @@ stpGen        = 1
 idxGen        = minGen
 inpPrefixAdc  = "tcAdc"
 inpPrefixLVal = "tcLVals"
-infoFileAdc   = "infoAdc.dat"
-infoFileLVal  = "infoLVal.dat"
+infoFileAdc   = outPath+"infoAdc.dat"
+infoFileLVal  = outPath+"infoLVal.dat"
 
 with open(infoFileAdc, "w") as fid:
   fid.write("   AGC  P_Tx -----------IMAG-------- -----------REAL-------- -----------CPLX--------       CFO Rel. to\n")
@@ -79,6 +79,19 @@ while idxAgc < maxAgc + stpAgc:
       cfo        = np.max(cfo)
       cfo        = freqAxis[cfo]
 
+      strCplx = cplx
+      strCplx = [str(elem) for elem in strCplx]
+      strCplx = ''.join(strCplx)
+      strCplx = strCplx.replace(')', '\n')
+      strCplx = strCplx.replace('(', '')
+
+      #print(strCplx)
+      with open(inpFileAdc+"_cplx.csv", "w") as fid:
+        fid.write("%s" % strCplx)
+
+#      plt.plot(freqAxis, specAxis)
+#      plt.show()
+
       with open(infoFileAdc, "a") as fid:
         fid.write(" %5d %5d" % (idxAgc, idxGen))
         fid.write(" %7d %7d %7d" % (int(np.min(imag)), int(np.max(imag)), int(np.sqrt(np.sum(imag**2) / len(imag)))))
@@ -97,7 +110,7 @@ while idxAgc < maxAgc + stpAgc:
         lVal = lVal + tmp[3-idx::4] * 256**idx
         idx  = idx + 1
 
-      lVal       = (lVal - lVal % 2**9) / 2**9
+      lVal       = ((lVal - lVal % 2**9) / 2**9) % 2**9
       lVal       = fct_complementOnTwo2int(lVal)
       minLVal    = np.min(lVal)
       maxLVal    = np.max(lVal)
