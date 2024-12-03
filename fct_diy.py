@@ -1,18 +1,17 @@
 import numpy as np
 
 def fct_determineBitWidth(a):
-  bitWidth = 0;
+  bitWidth = 0
 
   while a > 0:
-    bitWidth = bitWidth + 1;
-    a = (a - a % 2) / 2
+    bitWidth = bitWidth + 1
+    a = a // 2
 
   return bitWidth;
 
-def fct_complementOnTwo2int(inp):
-  nInp     = len(inp)
+def fct_complementOnTwo2int(inp, bitWidth=0):
   ret      = inp * 0
-  bitWidth = fct_determineBitWidth(max(inp))
+  bitWidth = max(bitWidth, fct_determineBitWidth(np.max(inp)))
   bitIdx   = 0
 
   while bitIdx < bitWidth:
@@ -93,3 +92,33 @@ def fct_rcGen(nOs, rollOff, nPeriods = 10, TSym = 1):
 
   return rc
 
+def fct_uint2binStr(inp, bitWidth=0):
+  inp    = int(inp)
+  bitIdx = 0
+  ret    = ''
+
+  while (inp > 0) or (bitIdx < bitWidth):
+
+    if (inp % 2) > 0:
+      ret = "1"+ret
+    else:
+      ret = "0"+ret
+
+    bitIdx = bitIdx + 1
+    inp    = inp // 2
+
+  return ret
+
+def fct_uint2binReverse(inp, bitWidth=0):
+  binStr = fct_uint2binStr(inp, bitWidth)
+  idx    = 0
+  ret    = 0
+
+  while idx < len(binStr):
+
+    if(binStr[idx] == '1'):
+      ret = ret + 2**idx
+
+    idx = idx + 1
+
+  return ret
