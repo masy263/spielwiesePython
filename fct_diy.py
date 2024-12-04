@@ -122,3 +122,34 @@ def fct_uint2binReverse(inp, bitWidth=0):
     idx = idx + 1
 
   return ret
+
+def fct_readCsv(inpFile):
+
+  with open(inpFile, "r") as fid:
+    lines = fid.read()
+
+  lines = lines.replace(",\n", '\n')
+  lines = lines.replace(' ', '')
+  lines = lines.replace('\n', ',\n')
+  lines = lines.split('\n')
+  nLine = len(lines)
+  nClmn = lines[0].count(',')
+  lines = ''.join(lines)
+  lines = lines.split(',')
+
+  while(lines[len(lines)-1] == ''):
+    lines = lines[0:len(lines)-1]
+    nLine = nLine - 1
+
+  data  = np.zeros(nLine * nClmn)
+  data  = [float(elem) for elem in lines]
+  ret   = np.zeros((nClmn, nLine))
+  idx   = 0
+
+  while idx < nClmn:
+    ret[idx] = data[idx::nClmn]
+    idx      = idx + 1
+
+  ret = np.transpose(ret)
+
+  return ret
