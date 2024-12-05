@@ -13,7 +13,7 @@ inpPath = '/home/markus/Arbeit/2024-11-21_testAufEvalBoard/tcRawData/'
 
 
 fileIdxStart = 0
-fileIdxEnd   = 15
+fileIdxEnd   = 100
 fileIdxIncr  = 1
 fileIdx      = fileIdxStart
 

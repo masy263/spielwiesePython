@@ -8,101 +8,167 @@ import numpy as np
 
 plt.style.use('dark_background')
 
-inpPath = "./outputData/"
-inpFile = "tc000adc_payload"
+inpPath      = "/home/markus/Arbeit/2024-11-21_testAufEvalBoard/tcRawData/"
+idxFileFirst = 0
+idxFileLast  = 29
+idxFile      = idxFileFirst
 
-data = np.transpose(np.int16(fct_readCsv(inpPath+inpFile+".csv") // 1))
-data = data[0]
-imag = fct_complementOnTwo2int(data[0::4] * 256 + data[1::4])
-real = fct_complementOnTwo2int(data[2::4] * 256 + data[3::4])
-cplx = real + imag * 1j
+while idxFile < idxFileLast + 1:
 
-strCplx = cplx
-strCplx = [str(elem) for elem in strCplx]
-strCplx = ''.join(strCplx)
-strCplx = strCplx.replace('[', ')')
-strCplx = strCplx.replace(']', '(')
-strCplx = strCplx.replace(')', '\n')
-strCplx = strCplx.replace('(', '')
+  # read tc adc input file
 
-with open(inpPath+inpFile+"_cplx.csv", "w") as fid:
-  fid.write("%s" % strCplx)
+  inpFile = "tc"+str("%03d" % idxFile)+"adc_payload"
+  data    = np.transpose(np.int16(fct_readCsv(inpPath+inpFile+".csv") // 1))
+  data    = data[0]
+  imag    = fct_complementOnTwo2int(data[0::4] * 256 + data[1::4])
+  real    = fct_complementOnTwo2int(data[2::4] * 256 + data[3::4])
+  cplx    = real + imag * 1j
 
-maxEAbs = 100
-chosenPhase = 0
+  # export complex symbols
 
-idxPP = 0
-while idxPP < 15:
-  phase = cplx[idxPP::15]
-  cAbs  = np.abs(phase)
-  mAbs  = np.sum(cAbs) / len(phase)
-  eAbs  = np.abs(cAbs / mAbs - 1) * 100
+  strCplx = cplx
+  strCplx = [str(elem) for elem in strCplx]
+  strCplx = ''.join(strCplx)
+  strCplx = strCplx.replace('[', ')')
+  strCplx = strCplx.replace(']', '(')
+  strCplx = strCplx.replace(')', '\n')
+  strCplx = strCplx.replace('(', '')
 
-  if maxEAbs > np.sum(eAbs) / len(phase):
-    chosenPhase = idxPP
-    maxEAbs     = np.sum(eAbs) / len(phase)
+  with open(inpPath+inpFile+"_cplx.csv", "w") as fid:
+    fid.write("%s" % strCplx)
 
-  idxPP = idxPP + 1
+  # search for polyphase which fits the symbol sequence best
 
-print("[script_241204_cfoEstimation] choose phase idx: %d :: mean failure %f" % (chosenPhase, maxEAbs))
+  maxEAbs     = 100 # max magnitude error
+  chosenPhase = 0
 
-pPhase = cplx[chosenPhase::15]
-phiErr = np.zeros(len(pPhase))
-idx    = 0
+  idxPP = 0
+  while idxPP < 15:
+    phase = cplx[idxPP::15]
+    cAbs  = np.abs(phase) # magnitudes
+    mAbs  = np.sum(cAbs) / len(phase) # mean magnitude
+    eAbs  = np.abs(cAbs / mAbs - 1) * 100 # magnitude error percentage
 
-while idx < len(pPhase):
-  tmp = pPhase[idx]
+    if maxEAbs > np.sum(eAbs) / len(phase):
+      chosenPhase = idxPP
+      maxEAbs     = np.sum(eAbs) / len(phase)
 
-  while np.abs(tmp) < 0.001:
-    idx = idx + 1
+    idxPP = idxPP + 1
+
+  print("[script_241204_cfoEstimation] choose phase idx: %d :: mean failure %f" % (chosenPhase, maxEAbs))
+
+  # determine phase error
+
+  pPhase      = cplx[chosenPhase::15]
+  phiErr      = np.zeros(len(pPhase))
+  phiErrOrig  = np.zeros(len(pPhase))
+  phiErrDevel = np.zeros(len(pPhase)+1)
+  resMA       = 100
+  phiErrMA    = np.zeros(len(phiErr)-resMA)
+  idx         = 0
+
+  while idx < len(pPhase):
     tmp = pPhase[idx]
 
-  if np.real(tmp) < 0:
-    tmp = tmp * np.exp(np.pi * 1j)
-  if np.imag(tmp) < 0:
-    tmp = tmp * np.exp(np.pi / 2 * 1j)
+    while np.abs(tmp) < 0.001:
+      idx = idx + 1
+      tmp = pPhase[idx]
 
-  phiErr[idx]  = np.pi / 4 - np.asin(np.imag(tmp) / np.abs(tmp))
-  pPhase[idx:] = pPhase[idx:] * np.exp(phiErr[idx] * 1j)
+    if np.real(tmp) < 0:
+      tmp = tmp * np.exp(np.pi * 1j)
+    if np.imag(tmp) < 0:
+      tmp = tmp * np.exp(np.pi / 2 * 1j)
 
-  idx = idx + 1
+    phiErrOrig[idx] = np.pi / 4 - np.asin(np.imag(tmp) / np.abs(tmp))
 
-phiErrDevel = np.zeros(len(phiErr))
-idx = 0
+    if np.abs((np.abs(tmp) / mAbs) - 1) > 0.66: # ignore sample that don't fit mean magnitude
+      phiErr[idx] = phiErrDevel[idx]
+    else:
+      phiErr[idx] = phiErrOrig[idx]
 
-while idx < len(phiErr):
-  phiErrDevel[idx] = np.sum(phiErr[:idx]) / idx
-  idx = idx + 1
+    pPhase[idx:]       = pPhase[idx:] * np.exp(phiErr[idx] * 1j)
+    phiErrDevel[idx+1] = np.sum(phiErr[:idx]) / (idx + 1)
 
-plt.plot(phiErrDevel)
+    if idx >= resMA:
+      phiErrMA[idx-resMA] = np.sum(phiErr[idx-resMA:idx]) / resMA
 
-fixPhi = np.sum(phiErr) / len(phiErr) / 15
-cfo = fixPhi *13500000 / 2 / np.pi
+    idx = idx + 1
 
-print("[script_241204_cfoEstimation] estimated mean cfo [Hz]: %d" % int(cfo))
-print("[script_241204_cfoEstimation] phase shift per sample: %f" % fixPhi)
+  phiErr      = phiErr[1:len(phiErr)]
+  phiErrOrig  = phiErrOrig[1:len(phiErrOrig)]
+  phiErrDevel = phiErrDevel[2:len(phiErrDevel)]
+  fixPhi      = np.sum(phiErr) / len(phiErr) / 15
+  cfo         = fixPhi *13500000 / 2 / np.pi
 
-cplx = real + imag * 1j
+  print("[script_241204_cfoEstimation] estimated mean cfo [Hz]: %d" % int(cfo))
+  print("[script_241204_cfoEstimation] phase shift per sample: %f" % fixPhi)
 
-idx = 0
-while idx < len(cplx):
-  tmp = (idx * fixPhi) % (2 * np.pi)
-  cplx[idx] = cplx[idx] * np.exp(tmp * 1j)
-  idx = idx + 1
+  # rebuild complex signal and apply correction angle
 
-imag = np.int16(np.imag(cplx))
-real = np.int16(np.real(cplx))
+  cplx = real + imag * 1j
 
-pltLen  = len(imag)
-pPhase  = 0
-fig, ax = plt.subplots(3,5)
+  idx = 0
+  while idx < len(cplx):
+    tmp = (idx * fixPhi) % (2 * np.pi)
+    cplx[idx] = cplx[idx] * np.exp(tmp * 1j)
+    idx = idx + 1
 
-while pPhase < 15:
-  pltLine = pPhase // 5
-  pltClmn = pPhase % 5
-  ax[pltLine][pltClmn].plot(real[pPhase:pltLen][::15], imag[pPhase:pltLen][::15], '*', color='yellow')
+  pltLen  = len(imag)
+  #pPhase   = 0
+  #fig, ax0 = plt.subplots(3,5)
 
-  pPhase = pPhase + 1
+  #while pPhase < 15:
+  #  pltLine = pPhase // 5
+  #  pltClmn = pPhase % 5
 
-plt.show()
+  #  ax1[pltLine][pltClmn].plot(real[pPhase:pltLen][::15], imag[pPhase:pltLen][::15], '*', color='yellow')
 
+  #  pPhase = pPhase + 1
+
+  #plt.show()
+
+  imagNeu = np.int16(np.imag(cplx))
+  realNeu = np.int16(np.real(cplx))
+
+  pltLenNeu  = len(imagNeu)
+  #pPhase   = 0
+  #fig, ax1 = plt.subplots(3,5)
+
+  #while pPhase < 15:
+  #  pltLine = pPhase // 5
+  #  pltClmn = pPhase % 5
+
+  #  ax1[pltLine][pltClmn].plot(realNeu[pPhase:pltLenNeu][::15], imagNeu[pPhase:pltLenNeu][::15], '*', color='yellow')
+
+  #  pPhase = pPhase + 1
+
+  #plt.show()
+
+  # generate overview plot
+
+  fig = plt.figure(layout='constrained', figsize=(10, 4)) 
+  subfigs = fig.subfigures(1, 2, wspace=0.07, width_ratios=[1, 2])
+  subfigs[0].suptitle(("Constellation of Poly Phase: %d (Record: %d)" % (chosenPhase, idxFile)), fontsize="x-large")
+  axConst = subfigs[0].subplots(2,1)
+  axConst[0].set_title('BEFORE')
+  axConst[0].set_xlabel('real')
+  axConst[0].set_ylabel('imag')
+  axConst[0].plot(real[chosenPhase:pltLen][::15], imag[chosenPhase:pltLen][::15], '*', color='yellow')
+  axConst[1].set_title('AFTER')
+  axConst[1].set_xlabel('real')
+  axConst[1].set_ylabel('imag')
+  axConst[1].plot(realNeu[chosenPhase:pltLenNeu][::15], imagNeu[chosenPhase:pltLenNeu][::15], '*', color='yellow')
+  subfigs[1].suptitle("Incremental Phase Offset", fontsize="x-large")
+  axPhiErr = subfigs[1].subplots(3,1)
+  axPhiErr[0].set_title('Phase Offset')
+  axPhiErr[0].plot(phiErrOrig, color='white')
+  axPhiErr[0].plot(phiErr, color='yellow')
+  axPhiErr[1].set_title('Phase Offset Continous Average')
+  axPhiErr[1].plot(phiErrDevel, color='white')
+  axPhiErr[2].set_title('Phase Offset Moving Average')
+  axPhiErr[2].plot(phiErrMA, color='orange')
+  plt.show()
+
+  # increment file index
+
+  idxFile = idxFile + 1

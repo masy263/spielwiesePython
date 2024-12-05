@@ -62,7 +62,7 @@ def fct_readRawTcData(inpFile):
   decData = [int(cnt, 16) for cnt in textData]
   strData = [str(cnt)+"\n" for cnt in decData]
 
-  with open(inpFile+"_payload.dec", "w") as text_file:
+  with open(inpFile+"_payload.csv", "w") as text_file:
     text_file.write("%s" % ''.join(strData))
 
   ret = decData
@@ -100,7 +100,7 @@ def fct_tcMetaAnalyze(inpData, fileName):
   logFile       = fileName+"_info.log"
   lValDecFile   = fileName+"_lVal.csv"
   lValHexFile   = fileName+"_lVal.hex"
-  outDat        = np.zeros(32, dtype=np.int32)
+  outDat        = np.zeros(32, dtype=np.int64)
   outTxt        = ['', '', '']
   writeFlag     = 0
   datCntLast    = 0
@@ -376,6 +376,7 @@ def fct_tcMetaAnalyze(inpData, fileName):
         outDat[0] = int(data1) # runCnt
         writeFlag = 1
 
+    #if typeId == np.sum([ord(ch) for ch in demodLVals+"nö"]): # ACHTUNG: TOTGELEGT!
     if typeId == np.sum([ord(ch) for ch in demodLVals]):
       
       if(typeIdLast != typeId):
