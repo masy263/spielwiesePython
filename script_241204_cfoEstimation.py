@@ -8,7 +8,7 @@ import numpy as np
 
 plt.style.use('dark_background')
 
-inpPath      = "/home/markus/Arbeit/2024-11-21_testAufEvalBoard/tcRawData/"
+inpPath      = "/home/markus/Arbeit/2024-11-21_ibnHdl/tcRawData/"
 idxFileFirst = 0
 idxFileLast  = 29
 idxFile      = idxFileFirst

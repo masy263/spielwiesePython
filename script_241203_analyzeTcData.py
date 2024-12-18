@@ -9,7 +9,7 @@ import os.path
 from fct_tcDataHandle import *
 
 
-inpPath = '/home/markus/Arbeit/2024-11-21_testAufEvalBoard/tcRawData/'
+inpPath = '/home/markus/Arbeit/2024-11-21_ibnHdl/tcRawData/'
 
 
 fileIdxStart = 0
