@@ -153,3 +153,17 @@ def fct_readCsv(inpFile):
   ret = np.transpose(ret)
 
   return ret
+
+def fct_bits2Byte(bits):
+  bits = bits[::-1]
+  idx  = 0
+  ret  = 0
+
+  while idx < len(bits):
+
+    if bits[idx] > 0:
+      ret = ret + 2**idx
+
+    idx = idx + 1
+
+  return ret
